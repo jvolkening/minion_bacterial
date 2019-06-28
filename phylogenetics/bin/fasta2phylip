@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+# fasta2phylip v0.1
+# c2014 Jeremy Volkening @ BASE2BIO
+# last updated 2014-03-02
+
+use strict;
+use warnings;
+use BioX::Seq::Stream;
+use Getopt::Long;
+use Pod::Usage;
+
+my $line_len     = 60;
+my $strict_names = 0;
+my $interleaved  = 0;
+my $input;
+my $output;
+my $print_version = 0;
+
+use constant NAME     => 'fasta2phylip';
+use constant VERSION  => '0.1';
+
+my $options_okay = GetOptions(
+
+    'line_length=i'    => \$line_len,
+    'strict_names'     => \$strict_names,
+    'interleaved'      => \$interleaved,
+    'in=s'             => \$input,
+    'out=s'            => \$output,
+    'man'              => sub{ pod2usage(-verbose => 2); },
+    'help'             => sub{ pod2usage(-verbose => 2); },
+    'version'          => \$print_version,
+);
+
+# Handle version requests
+if ($print_version) {
+    print 'This is ' , NAME, ' v' , VERSION, "\n";
+    print "Copyright 2014 Jeremy Volkening (jeremy\@base2bio.com)\n";
+    print "Licensed under the GNU GPLv3\n";
+    exit;
+}
+
+print_usage('Syntax error: unknown option') if !$options_okay;
+print_usage("Error: input file can\'t be read")
+    if (defined $input && ! -r $input );
+
+my $s = BioX::Seq::Stream->new($input);
+my $fh_out = \*STDOUT;
+if (defined $output) {
+    open($fh_out, '>', $output) or die "Error opening file for output:$@\n"
+}
+
+my $len;
+my %seqs;
+my @ordered;
+my %unique;
+while (my $obj = $s->next_seq) {
+    my $id = $obj->id;
+    if ($strict_names) {
+        if (length($id) > 9) {
+            warn "clipping ID $id\n";
+            $id = substr $id, 0, 9;
+        }
+        $id = sprintf '%-9s', $id;
+        $id =~ s/\W/_/g;
+        die "Errror: duplicate seq names ($id)\n" if (defined $unique{$id});
+        $unique{$id} = 1;
+    }
+    push @ordered, $id;
+    my $seq = $obj->seq;
+    $len = length($seq) if (! defined $len);
+    die "mismatch in sequence lengths" if (length($seq) != $len);
+    $seqs{$id} = $seq;
+}
+my $s_count = scalar keys %seqs;
+print {$fh_out} " $s_count $len\n";
+if ($interleaved) {
+    my $i = 0;
+    while ($i < $len) {
+        for (@ordered) {
+            print {$fh_out} "$_ " if ($i == 0);
+            print {$fh_out} substr($seqs{$_}, $i, $line_len), "\n";
+        }
+        print {$fh_out} "\n";
+        $i += $line_len;
+    }
+}
+else { #non-interleaved
+    print {$fh_out} "$_ $seqs{$_}\n" for (@ordered);
+}
+
+sub print_usage {
+    my $string = shift;
+    pod2usage(
+        -msg     => $string,
+        -verbose => 1,
+    );
+    exit;
+}

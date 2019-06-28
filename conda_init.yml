@@ -1,0 +1,11 @@
+channels:
+ - conda-forge
+ - bioconda
+ - defaults
+dependencies:
+ - sra-tools
+ - nextflow=18.10.1
+ - perl>=5.12.0
+ - perl-perlio-gzip
+ - perl-biox-seq
+ - poretools
