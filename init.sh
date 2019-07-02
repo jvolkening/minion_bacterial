@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-source activate minion_init
+# set up temporary conda environments with random names
+ENV1=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1
+ENV2=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1
+conda env create -n $ENV1 -f conda_init.yml
+conda env create -n $ENV2 poretools
+
+source activate $ENV1
 
 # Fetch BUSCO dataset
 echo "Fetching BUSCO data"
@@ -21,7 +27,7 @@ wget -qO- --show-progress https://sra-pub-src-1.s3.amazonaws.com/SRR9603471/BC02
 echo "Fetching FASTQ data from SRA"
 fastq-dump --gzip --split-files --skip-technical --clip --dumpbase --outdir raw/illumina/Ecoli SRR6373397
 
-THREADS=1
+THREADS=30
 EC_UNTRIMMED=raw/minion/Ecoli/untrimmed.fq.gz
 EC_TRIMMED=raw/minion/Ecoli/trimmed.fq.gz
 SE_UNTRIMMED=raw/minion/Sent/untrimmed.fq.gz
@@ -31,14 +37,14 @@ SE_TRIMMED=raw/minion/Sent/trimmed.fq.gz
 # FASTQ header. Nanopolish seems to use this information during indexing.
 
 source deactivate
-source activate poretools
+source activate $ENV2
 
 echo "Extracting reads as FASTQ"
 poretools fastq $(readlink -f raw/minion/Sent/fast5)  | gzip > $SE_UNTRIMMED
 poretools fastq $(readlink -f raw/minion/Ecoli/fast5) | gzip > $EC_UNTRIMMED
 
 source deactivate
-source activate minion_init
+source activate $ENV1
 
 # Trim adapters (manuscript used porechop v0.2.2, which is not available in Bioconda
 # Note that a few reads (~1%) will be slightly different at the ends between
@@ -78,3 +84,7 @@ bin/time_series.pl \
     --in_untrim $EC_UNTRIMMED \
     --durations 15,30,60,120,240,480,960,1500 \
     --out_dir ts/Ecoli
+
+# clean up temporary environments
+conda remove --name $ENV1 --all
+conda remove --name $ENV2 --all
