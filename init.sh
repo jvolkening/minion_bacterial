@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 
-# Fetch BUSCO dataset
-wget -P meta http://busco.ezlab.org/v2/datasets/enterobacteriales_odb9.tar.gz
-tar -C meta -xvf meta/enterobacteriales_odb9.tar.gz
-
 source activate minion_init
 
-# Fetch SRA Illumina data
-fastq-dump --gzip --split-files --skip-technical --clip --dumpbase --outdir raw/illumina/Ecoli SRR6373397
+# Fetch BUSCO dataset
+echo "Fetching BUSCO data"
+wget -qO- --show-progress http://busco.ezlab.org/v2/datasets/enterobacteriales_odb9.tar.gz \
+    | tar -xz -C meta
 
 # Fetch SRA MinION data
-## fetch BC01 to raw/minion/Sent/fast5
-## fetch BC02 to raw/minion/Ecoli/fast5
+echo "Fetching Salmonella FAST5 (may take a while)"
+mkdir -p raw/minion/Sent/fast5
+wget -qO- --show-progress https://sra-pub-src-1.s3.amazonaws.com/SRR9603470/BC01.tar.gz.1 \
+    | tar -x -C raw/minion/Sent/fast5 --strip 1
+echo "Fetching E. coli FAST5 (may take a while)"
+mkdir -p raw/minion/Ecoli/fast5
+wget -qO- --show-progress https://sra-pub-src-1.s3.amazonaws.com/SRR9603471/BC02.tar.gz.1 \
+    | tar -x -C raw/minion/Ecoli/fast5 --strip 1
+
+# Fetch SRA Illumina data
+echo "Fetching FASTQ data from SRA"
+fastq-dump --gzip --split-files --skip-technical --clip --dumpbase --outdir raw/illumina/Ecoli SRR6373397
 
 THREADS=1
 EC_UNTRIMMED=raw/minion/Ecoli/untrimmed.fq.gz
@@ -25,6 +33,7 @@ SE_TRIMMED=raw/minion/Sent/trimmed.fq.gz
 source deactivate
 source activate poretools
 
+echo "Extracting reads as FASTQ"
 poretools fastq $(readlink -f raw/minion/Sent/fast5)  | gzip > $SE_UNTRIMMED
 poretools fastq $(readlink -f raw/minion/Ecoli/fast5) | gzip > $EC_UNTRIMMED
 
@@ -38,6 +47,7 @@ source activate minion_init
 # Porechop, and thus Porechop searched for both barcodes in all reads. Because
 # they needed to be demultiplexed as FAST5 before submission to SRA, this
 # difference was unavoidable.
+echo "Trimming reads"
 porechop --input $SE_UNTRIMMED \
     --threads $THREADS \
     --adapter_threshold 95.0 \
@@ -53,6 +63,7 @@ porechop --input $EC_UNTRIMMED \
 
 
 # Create subsampled datasets based on elapsed time series
+echo "Creating time series subsamples"
 bin/time_series.pl \
     --read_map meta/Sent.map.tsv.gz \
     --in_fast5 raw/minion/Sent/fast5 \

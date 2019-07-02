@@ -17,12 +17,7 @@ conda env create -n minion_init -f conda_init.yml
 conda create --name poretools poretools
 ```
 
-2. Download the FAST5 data into the directories
-`raw/minion/Sent/fast5` and `raw/minion/Ecoli/fast5` for the *Salmonella* and
-*E. coli* data respectively. This step will be incorporated into the `init.sh`
-script once the data are published to SRA.
-
-3. Download the raw data, extract and trim the FASTQ reads, and create the
+2. Download the raw data, extract and trim the FASTQ reads, and create the
 time series subsampling directories for use in benchmarking different MinION
 run times:
 
@@ -30,7 +25,7 @@ run times:
 ./init.sh
 ```
 
-4. Run the run-time benchmarking on the *Salmonella* and *E. coli* datasets
+3. Run the run-time benchmarking on the *Salmonella* and *E. coli* datasets
 
 ```
 bin/bm_Sent.pl --in ts/Sent --out <path_to_output_dir> --meta meta --threads <num_threads>
@@ -87,3 +82,7 @@ double-check that these paths are correctly encoded for Nanopolish to find
 them. We have found this to be tricky to troubleshoot, but the most obvious
 sign that something is wrong is that the Nanopolish input and output
 assemblies will be identical.
+
+### SRA FAST5 data
+
+The SRA accessions for this project are SRR9603470 (Salmonella) and SRR9603471 (E. coli). The FAST5 data can be downloaded via the SRA web portal under the 'Download' tab. However, be aware that, despite the file naming SRA used, these files are tarballs only and not gzipped, so set your `tar` extraction flags appropriately. You can find example commands for fetching the data in the `init.sh` script in this repo.
