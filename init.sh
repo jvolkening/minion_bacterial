@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+set -e
+
 # set up temporary conda environments with random names
-ENV1=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1
-ENV2=cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1
+ENV1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+ENV2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 conda env create -n $ENV1 -f conda_init.yml
-conda env create -n $ENV2 poretools
+conda create -y -q -n $ENV2 poretools
 
 source activate $ENV1
 
@@ -59,12 +61,14 @@ porechop --input $SE_UNTRIMMED \
     --adapter_threshold 95.0 \
     --middle_threshold 100 \
     --check_reads 4000 \
+    --verbosity 0 \
 | gzip > $SE_TRIMMED
 porechop --input $EC_UNTRIMMED \
     --threads $THREADS \
     --adapter_threshold 95.0 \
     --middle_threshold 100 \
     --check_reads 4000 \
+    --verbosity 0 \
 | gzip > $EC_TRIMMED
 
 

@@ -8,4 +8,4 @@ dependencies:
  - perl>=5.12.0
  - perl-perlio-gzip
  - perl-biox-seq
- - poretools
+ - porechop
