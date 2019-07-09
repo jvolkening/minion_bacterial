@@ -2,6 +2,13 @@
 
 set -e
 
+THREADS=30
+EC_UNTRIMMED=raw/minion/Ecoli/untrimmed.fq.gz
+EC_TRIMMED=raw/minion/Ecoli/trimmed.fq.gz
+SE_UNTRIMMED=raw/minion/Sent/untrimmed.fq.gz
+SE_TRIMMED=raw/minion/Sent/trimmed.fq.gz
+
+
 # set up temporary conda environments with random names
 ENV1=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 ENV2=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
@@ -28,12 +35,6 @@ wget -qO- --show-progress https://sra-pub-src-1.s3.amazonaws.com/SRR9603471/BC02
 # Fetch SRA Illumina data
 echo "Fetching FASTQ data from SRA"
 fastq-dump --gzip --split-files --skip-technical --clip --dumpbase --outdir raw/illumina/Ecoli SRR6373397
-
-THREADS=30
-EC_UNTRIMMED=raw/minion/Ecoli/untrimmed.fq.gz
-EC_TRIMMED=raw/minion/Ecoli/trimmed.fq.gz
-SE_UNTRIMMED=raw/minion/Sent/untrimmed.fq.gz
-SE_TRIMMED=raw/minion/Sent/trimmed.fq.gz
 
 # Extract FASTQ (the readlink is added so that absolute paths are used in the
 # FASTQ header. Nanopolish seems to use this information during indexing.

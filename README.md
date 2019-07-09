@@ -7,17 +7,9 @@ scripts for reproducing the results therein. Workflows for the phylogenetic
 analysis can be run separately from the `phylogenetics` directory. The time
 series analysis can be reproduced using the following steps:
 
+**NOTE: The following steps require `conda` to be installed in your `$PATH`**
 
-1. Initialize the software environments used in the build script. A separate
-environment is needed for Poretools as it's conda package is incompatible with
-Porechop.
-
-```
-conda env create -n minion_init -f conda_init.yml
-conda create --name poretools poretools
-```
-
-2. Download the raw data, extract and trim the FASTQ reads, and create the
+1. Download the raw data, extract and trim the FASTQ reads, and create the
 time series subsampling directories for use in benchmarking different MinION
 run times:
 
@@ -25,7 +17,7 @@ run times:
 ./init.sh
 ```
 
-3. Run the run-time benchmarking on the *Salmonella* and *E. coli* datasets
+2. Run the run-time benchmarking on the *Salmonella* and *E. coli* datasets
 
 ```
 bin/bm_Sent.pl --in ts/Sent --out <path_to_output_dir> --meta meta --threads <num_threads>
